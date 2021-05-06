@@ -14,7 +14,6 @@ contract Lottery is Ownable {
   address[] public players;
 
   // Events
-  event TicketPriceChanged(uint ticketPrice);
 
   /**
    @notice Contract constructor method.
@@ -34,28 +33,31 @@ contract Lottery is Ownable {
     players.push(msg.sender);
   }
 
-  /**
-    @notice Cancel a ticket and get the money back.
-   */
-  function cancelTickets() public {
-    // ????????????????????????????????????????
-  }
+  // /**
+  //   @notice Cancel a ticket and get the money back.
+  //  */
+  // function cancelTickets() public {
+  //   payable(msg.sender).transfer(ticketPrice);
+    
+  //   tickets[msg.sender] = 0;
+  //   // delete players[msg.sender];
+  // }
 
-  /**
-   @notice Gets the lottery winner account.
-   */
-  function getWinner() public view onlyOwner {
-    uint winner = uint(keccak256(abi.encodePacked(block.timestamp, block.difficulty))) % players.length;
-    console.log(winner);
-  }
+  // /**
+  //  @notice Gets the lottery winner account.
+  //  */
+  // function getWinner() public view onlyOwner {
+  //   uint winner = uint(keccak256(abi.encodePacked(block.timestamp, block.difficulty))) % players.length;
+  //   console.log(winner);
+  // }
 
-  /**
-   @notice Returns number of tickets for an address.
-   @param _addr - Wallet address.
-   */
-  function getAddressTickets(address _addr) public view returns (uint) {
-    return tickets[_addr];
-  }
+  // /**
+  //  @notice Returns number of tickets for an address.
+  //  @param _addr - Wallet address.
+  //  */
+  // function getAddressTickets(address _addr) public view returns (uint) {
+  //   return tickets[_addr];
+  // }
 
   /**
    @notice Returns total number of tickets.
@@ -70,15 +72,6 @@ contract Lottery is Ownable {
     */
   function getBalance() public view returns (uint) {
       return address(this).balance;
-  }
-
-  /**
-   @notice Sets ticket price.
-   @param _ticketPrice - New ticket price.
-   */
-  function setTicketPrice(uint _ticketPrice) public onlyOwner {
-      ticketPrice = _ticketPrice;
-      emit TicketPriceChanged(ticketPrice);
   }
 
 }

@@ -6,8 +6,8 @@ var BigNumber = require('big-number');
 use(solidity);
 
 describe("Lottery Contract", function () {
-  let Lottery;
-  let lottery;
+  let LotteryFactory, Lottery;
+  let lotteryFactory, lottery;
   let owner;
   let addr1;
   let addr2;
@@ -18,27 +18,42 @@ describe("Lottery Contract", function () {
   beforeEach(async function () {
     
     // Deploying contracta
+    LotteryFactory = await ethers.getContractFactory("LotteryFactory");
+    lotteryFactory = await LotteryFactory.deploy(ticketPrice);
+    expect(lotteryFactory.address).to.properAddress;
+
+    await lotteryFactory.createLottery();
+
+    const lotteryAddress = await lotteryFactory.getLotteryAddress();
     Lottery = await ethers.getContractFactory("Lottery");
-    lottery = await Lottery.deploy(ticketPrice);
+    lottery = await Lottery.attach(lotteryAddress);
     expect(lottery.address).to.properAddress;
+    expect(lottery.address).to.equal(lotteryAddress);
 
     // Getting test accounts
     [owner, addr1, addr2, ...addrs] = await ethers.getSigners();
   });
 
-  it("Should have an owner account", async function () {
-    expect(owner.address).to.equal(await lottery.owner());
+  describe("LotteryFactory", function () {
+
+    it("Should create a new lottery", async function () {
+      await lotteryFactory.createLottery();
+      
+      expect(await lotteryFactory.getLotteryAddress()).to.properAddress;
+      expect(await lotteryFactory.getLotteryId()).to.equal(1);
+    });
+
   });
 
-  it("Should be able to buy tickets", async function () {
-    await lottery.connect(addr1).buyTicket({value: ticketPrice});
-    await lottery.connect(addr1).buyTicket({value: ticketPrice});
-    await lottery.connect(addr2).buyTicket({value: ticketPrice});
-    
-    expect(await lottery.getBalance()).to.equal(ethers.utils.parseEther('0.3'));
-    expect(await lottery.getAddressTickets(addr1.address)).to.equal(2);
-    expect(await lottery.getAddressTickets(addr2.address)).to.equal(1);
-    expect(await lottery.getTotalTickets()).to.equal(3);    
+  describe("Lottery", function () {
+
+    it("Should buy a ticket", async function () {
+      await lottery.connect(addr1).buyTicket({value: ticketPrice});
+      
+      expect(await lottery.getTotalTickets()).to.equal(1);
+      expect(await lottery.getBalance()).to.equal(ticketPrice);
+    });
+
   });
 
 });
