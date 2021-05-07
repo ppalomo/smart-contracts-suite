@@ -22,11 +22,10 @@ describe("Lottery Contract", function () {
     lotteryFactory = await LotteryFactory.deploy(ticketPrice);
     expect(lotteryFactory.address).to.properAddress;
 
-    await lotteryFactory.createLottery();
-
-    const lotteryAddress = await lotteryFactory.getLotteryAddress();
+    let lotteryAddress = await lotteryFactory.getLotteryAddress();
     Lottery = await ethers.getContractFactory("Lottery");
     lottery = await Lottery.attach(lotteryAddress);
+    expect(await lottery.lotteryId()).to.equal(0);
     expect(lottery.address).to.properAddress;
     expect(lottery.address).to.equal(lotteryAddress);
 
@@ -41,6 +40,13 @@ describe("Lottery Contract", function () {
       
       expect(await lotteryFactory.getLotteryAddress()).to.properAddress;
       expect(await lotteryFactory.getLotteryId()).to.equal(1);
+
+      const lotteryAddress = await lotteryFactory.getLotteryAddress();
+      Lottery = await ethers.getContractFactory("Lottery");
+      lottery = await Lottery.attach(lotteryAddress);
+      expect(await lottery.lotteryId()).to.equal(1);
+      expect(lottery.address).to.properAddress;
+      expect(lottery.address).to.equal(lotteryAddress);
     });
 
   });
@@ -48,10 +54,23 @@ describe("Lottery Contract", function () {
   describe("Lottery", function () {
 
     it("Should buy a ticket", async function () {
-      await lottery.connect(addr1).buyTicket({value: ticketPrice});
+      await lottery.connect(addr1).buyTickets(2, {value: ethers.utils.parseEther('0.2')});
+      await lottery.connect(addr2).buyTickets(1, {value: ethers.utils.parseEther('0.1')});
       
-      expect(await lottery.getTotalTickets()).to.equal(1);
-      expect(await lottery.getBalance()).to.equal(ticketPrice);
+      expect(await lottery.getTotalTickets()).to.equal(3);
+      expect(await lottery.getAddressTickets(addr1.address)).to.equal(2)
+      expect(await lottery.getAddressTickets(addr2.address)).to.equal(1)
+      expect(await lottery.getBalance()).to.equal(ethers.utils.parseEther('0.3'));
+    });
+
+    it("Should declare a winner", async function() {
+      await lottery.connect(addr1).buyTickets(1, {value: ethers.utils.parseEther('0.1')});
+      await lottery.connect(addr2).buyTickets(1, {value: ethers.utils.parseEther('0.1')});
+      
+      await lottery.declareWinner();
+
+      expect(await lottery.getBalance()).to.equal(0);
+      expect(await lottery.active()).to.false;
     });
 
   });

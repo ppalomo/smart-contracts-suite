@@ -14,7 +14,7 @@ contract LotteryFactory is Ownable {
     uint public ticketPrice;
 
     // Events
-    event LotteryCreated(uint lotteryId);
+    event LotteryCreated(uint lotteryId, uint ticketPrice);
     event TicketPriceChanged(uint ticketPrice);
 
     /**
@@ -23,13 +23,14 @@ contract LotteryFactory is Ownable {
     */
     constructor(uint _ticketPrice) {
         ticketPrice = _ticketPrice;
+        createLottery();
     } 
 
     function createLottery() public {
-        Lottery newLottery = new Lottery(ticketPrice);
+        Lottery newLottery = new Lottery(lotteries.length, ticketPrice);
         lotteries.push(newLottery);
 
-        emit LotteryCreated(lotteries.length - 1);
+        emit LotteryCreated(lotteries.length - 1, ticketPrice);
     }
 
     function getLotteryId() public view returns(uint) {
