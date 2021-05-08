@@ -1,0 +1,15 @@
+no loss NFT lotteries
+
+- No loss of deposited funds
+- Ability to withdraw at any time
+
+=========================================
+
+- El creador puede establecer un precio mínimo a recibir por el nft. Si no se llega a esa cantidad,
+el sorteo se suspende.
+- El jugador puede cancelar sus boletos cuando quiera, incluso en el período de staking.
+- Pago en USDC
+- Sorteo de varios NFT a la vez?
+- DAO (Governance by own token)
+- Cómo seleccionar los NFT a sortear? Cuántos sorteos puede haber a la vez?
+- Dar nuestros tokens a los participantes con premios especiales a algunos seleccionados.
