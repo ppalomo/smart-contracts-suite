@@ -6,22 +6,15 @@ import "./Lottery.sol";
 import "hardhat/console.sol";
 
 contract LotteryFactory is Ownable {
-  
-    // Structs
-    struct LotteryItem{
-        uint ticketPrice;
-        Lottery instance;
-    }
 
     // Variables
-    LotteryItem[] public lotteries;
-    uint public daysOpenPeriod;
-    uint public daysStakingPeriod;
+    // LotteryItem[] public lotteries;
+    Lottery[] public lotteries;
     uint public maxActiveLotteries;
     uint public numberOfActiveLotteries;
 
     // Events
-    event LotteryCreated(uint lotteryId, address nftAddress, uint nftIndex, uint ticketPrice);
+    event LotteryCreated(uint lotteryId, address lotteryAddress, address nftAddress, uint nftIndex, uint ticketPrice);
     event MaxActiveLotteriesChanged(uint maxActiveLotteries);
     event PeriodsChanged(uint daysOpenPeriod, uint daysStakingPeriod);
 
@@ -29,8 +22,6 @@ contract LotteryFactory is Ownable {
     @notice Contract constructor method.
     */
     constructor() {
-        daysOpenPeriod = 7;
-        daysStakingPeriod = 7;
         maxActiveLotteries = 10;
         numberOfActiveLotteries = 0;
     }
@@ -42,18 +33,16 @@ contract LotteryFactory is Ownable {
     @param _ticketPrice - Lottery ticket price.
      */
     function createLottery(address _nftAddress, uint _nftIndex, uint _ticketPrice) public onlyOwner {
-        // Check if nft transfer is approved
+        // Check if nft transfer is approved !!!!!!!!!!!!!!!!!!!!!!!!!!
         require(numberOfActiveLotteries < maxActiveLotteries, 'Maximum of active lotteries has already been reached');
         require(_nftAddress != address(0), 'A valid address is required');
         require(_ticketPrice > 0, 'A valid ticket price is required');
 
-        Lottery instance = new Lottery(lotteries.length, _nftAddress, _nftIndex, _ticketPrice, daysOpenPeriod, daysStakingPeriod);
-        LotteryItem memory newLottery = LotteryItem(_ticketPrice, instance);        
-        lotteries.push(newLottery);
-
+        Lottery instance = new Lottery(lotteries.length, _nftAddress, _nftIndex, _ticketPrice);
+        lotteries.push(instance);
         numberOfActiveLotteries++;
 
-        emit LotteryCreated(lotteries.length - 1, _nftAddress, _nftIndex, _ticketPrice);
+        emit LotteryCreated(lotteries.length - 1, address(instance), _nftAddress, _nftIndex, _ticketPrice);
     }
 
     /**
@@ -66,14 +55,20 @@ contract LotteryFactory is Ownable {
     }
 
     /**
-     @notice Sets days of the different lottery periods.
-     @param _daysOpenPeriod - Number of days the lottery is open.
-     @param _daysStakingPeriod - Number of days the lottery is staking.
+     @notice Changes de lottery state to staking.
+     @param _lotteryId - Lottery identifier.
      */
-    function setDays(uint _daysOpenPeriod, uint _daysStakingPeriod) public onlyOwner {
-        daysOpenPeriod = _daysOpenPeriod;
-        daysStakingPeriod = _daysStakingPeriod;
-        emit PeriodsChanged(daysOpenPeriod, daysStakingPeriod);
+    function launchStaking(uint _lotteryId) public onlyOwner {
+        lotteries[_lotteryId].launchStaking();
+    }
+
+    /**
+     @notice Declares a winner and closes the lottery.
+     @param _lotteryId - Lottery identifier.
+     */
+    function declareWinner(uint _lotteryId) public onlyOwner {
+        lotteries[_lotteryId].declareWinner();
+        numberOfActiveLotteries--;
     }
 
 }

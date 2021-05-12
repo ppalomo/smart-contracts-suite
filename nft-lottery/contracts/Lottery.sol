@@ -7,12 +7,12 @@ import "hardhat/console.sol";
 contract Lottery is Ownable {
   
   // Enums
-  // enum State
-  // { 
-  //   OPEN, 
-  //   STAKING, 
-  //   CLOSED 
-  // }
+  enum State
+  { 
+    OPEN, 
+    STAKING, 
+    CLOSED 
+  }
 
   // Structs
   struct NFT {
@@ -23,17 +23,12 @@ contract Lottery is Ownable {
   // Variables
   uint public lotteryId;
   uint public ticketPrice;
-  uint daysOpenPeriod; 
-  uint daysStakingPeriod;
   uint created;
   NFT public nft;
   mapping(address => uint) tickets;
   address[] public players;
-  // State public state;
-
-  
-  // bool public active;
-  // address public winner;
+  State public state;
+  address public winner;
 
   // Events
   event TicketsBought(uint lotteryId, address indexed buyer, uint numberOfTickets);
@@ -46,14 +41,12 @@ contract Lottery is Ownable {
    @param _nftIndex - NFT indentifier in its contract.
    @param _ticketPrice - Lottery ticket price.
    */
-  constructor(uint _lotteryId, address _nftAddress, uint _nftIndex, uint _ticketPrice, uint _daysOpenPeriod, uint _daysStakingPeriod) {
+  constructor(uint _lotteryId, address _nftAddress, uint _nftIndex, uint _ticketPrice) {
     lotteryId = _lotteryId;
     ticketPrice = _ticketPrice;
-    daysOpenPeriod = _daysOpenPeriod;
-    daysStakingPeriod = _daysStakingPeriod;
     nft.addr = _nftAddress;
     nft.index = _nftIndex;
-    // state = State.OPEN;
+    state = State.OPEN;
     created = block.timestamp;
   } 
 
@@ -62,7 +55,7 @@ contract Lottery is Ownable {
    @param _numberOfTickets - Number of the tickets to buy.
    */
   function buyTickets(uint _numberOfTickets) public payable {
-    require(block.timestamp < created + (daysOpenPeriod * 1 days), 'The lottery open period was closed');
+    require(state == State.OPEN, 'The lottery open period was closed');
     require(msg.value == ticketPrice * _numberOfTickets, 'Amount sent is different than price');
 
     tickets[msg.sender] += _numberOfTickets;
@@ -73,21 +66,58 @@ contract Lottery is Ownable {
     emit TicketsBought(lotteryId, msg.sender, _numberOfTickets);
   }
 
-  // /**
-  //  @notice Gets the lottery winner account.
-  //  */
-  // function declareWinner() public {
-  //   require(players.length > 0);
+  /**
+   @notice Method used to cancel bought tickets.
+   @param _numberOfTickets - Number of the tickets to buy.
+   */
+  function cancelTickets(uint _numberOfTickets) public {
+    require(state == State.OPEN, 'The lottery open period was closed');
+    require(tickets[msg.sender] >= _numberOfTickets, 'You do not have enough tickets');
 
-  //   uint index = uint(keccak256(abi.encodePacked(block.timestamp, block.difficulty))) % players.length;
-  //   winner = players[index];
+    // Tranfering amount to sender
+    uint amount = ticketPrice * _numberOfTickets;
+    require(address(this).balance >= amount, 'Not enough money in the balance');
+    payable(msg.sender).transfer(amount);
 
-  //   uint prize = address(this).balance;
-  //   payable(players[index]).transfer(address(this).balance);
-  //   active = false;
+    tickets[msg.sender] -= _numberOfTickets;
 
-  //   emit WinnerDeclared(players[index], prize);
-  // }
+    // Delete items from players array
+  }
+
+  function redeemTickets() public {
+    require(state == State.CLOSED, 'The lottery is not closed');
+
+    // Tranfering amount to sender
+    require(address(this).balance >= tickets[msg.sender], 'Not enough money in the balance');
+    payable(msg.sender).transfer(tickets[msg.sender]);
+
+    // Check function !!!!!!!!!!!!!!!!!!!!!!!
+  }
+
+  /**
+   @notice Changes de lottery state to staking.
+   */
+  function launchStaking() external onlyOwner {
+    require(state == State.OPEN, 'The lottery is not open');
+    state = State.STAKING;
+
+    // Launch staking!!!!!!!!!
+  }
+
+  /**
+   @notice Declares a winner and closes the lottery.
+   */
+  function declareWinner() external onlyOwner {
+      require(state != State.CLOSED, 'The lottery is not open');
+      require(players.length > 0, 'At least one player is necessary');
+
+      uint index = uint(keccak256(abi.encodePacked(block.timestamp, block.difficulty))) % players.length;
+      winner = players[index];
+
+      // Transfer NFT to winner !!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+      state = State.CLOSED;
+  }
 
   /**
    @notice Returns number of tickets for an address.
